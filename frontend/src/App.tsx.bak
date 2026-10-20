@@ -1,0 +1,726 @@
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Activity,
+  Boxes,
+  CheckCircle2,
+  CircleDot,
+  FolderGit2,
+  Gauge,
+  History,
+  Play,
+  Settings,
+  Tags,
+  TestTube2,
+  TriangleAlert,
+} from "lucide-react";
+
+import {
+  AddProjectDialog,
+} from "./components/AddProjectDialog";
+
+import type {
+  AddProjectRequest,
+} from "./types/project";
+
+import type {
+  ProjectManifest,
+} from "./types/api-project";
+
+function App() {
+  const [
+    addProjectOpen,
+    setAddProjectOpen,
+  ] = useState(false);
+
+  const [
+    projects,
+    setProjects,
+  ] = useState<ProjectManifest[]>([]);
+
+  const [
+    loadingProjects,
+    setLoadingProjects,
+  ] = useState(true);
+
+  const [
+    projectError,
+    setProjectError,
+  ] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadProjects();
+  }, []);
+
+  async function loadProjects() {
+    setLoadingProjects(true);
+    setProjectError(null);
+
+    try {
+      const response = await fetch(
+        "/api/projects",
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Unable to load projects.",
+        );
+      }
+
+      const data =
+        (await response.json()) as ProjectManifest[];
+
+      setProjects(data);
+    } catch (error) {
+      setProjectError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load projects.",
+      );
+    } finally {
+      setLoadingProjects(false);
+    }
+  }
+
+  async function handleAddProject(
+    request: AddProjectRequest,
+  ) {
+    setProjectError(null);
+
+    if (
+      request.sourceType !== "LOCAL" ||
+      request.localMode !== "PATH" ||
+      !request.localPath
+    ) {
+      setProjectError(
+        "For this first functional vertical, use Local project ? Local path. Git and uploads will be connected next.",
+      );
+
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "/api/projects/inspect",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            name: request.name,
+            sourceType:
+              "LOCAL_PATH",
+            location:
+              request.localPath,
+          }),
+        },
+      );
+
+      const body =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          body.message ??
+            "Project inspection failed.",
+        );
+      }
+
+      const manifest =
+        body as ProjectManifest;
+
+      setProjects((current) => {
+        const withoutExisting =
+          current.filter(
+            (project) =>
+              project.source.location !==
+              manifest.source.location,
+          );
+
+        return [
+          ...withoutExisting,
+          manifest,
+        ];
+      });
+
+      setAddProjectOpen(false);
+    } catch (error) {
+      setProjectError(
+        error instanceof Error
+          ? error.message
+          : "Project inspection failed.",
+      );
+    }
+  }
+
+  const metrics =
+    useMemo(() => {
+      const containers =
+        projects.reduce(
+          (total, project) =>
+            total +
+            project.testCatalog
+              .containers.length,
+          0,
+        );
+
+      const tests =
+        projects.reduce(
+          (total, project) =>
+            total +
+            project.testCatalog.testCount,
+          0,
+        );
+
+      const labels =
+        new Set(
+          projects.flatMap(
+            (project) =>
+              project.testCatalog.labels,
+          ),
+        );
+
+      return {
+        projects:
+          projects.length,
+        containers,
+        tests,
+        labels:
+          labels.size,
+      };
+    }, [projects]);
+
+  return (
+    <>
+      <div className="min-h-screen bg-slate-50 text-slate-950">
+        <div className="flex min-h-screen">
+          <aside className="fixed inset-y-0 left-0 w-64 border-r border-slate-200 bg-white">
+            <div className="flex h-16 items-center border-b border-slate-200 px-6">
+              <div className="mr-3 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white">
+                <TestTube2 size={19} />
+              </div>
+
+              <div>
+                <div className="font-semibold">
+                  Automation Hub
+                </div>
+
+                <div className="text-xs text-slate-500">
+                  Execution Platform
+                </div>
+              </div>
+            </div>
+
+            <nav className="space-y-1 p-4">
+              <SidebarItem
+                icon={<Gauge size={18} />}
+                label="Dashboard"
+                active
+              />
+
+              <SidebarItem
+                icon={<FolderGit2 size={18} />}
+                label="Projects"
+              />
+
+              <SidebarItem
+                icon={<Play size={18} />}
+                label="Executions"
+              />
+
+              <SidebarItem
+                icon={<Boxes size={18} />}
+                label="Environments"
+              />
+
+              <SidebarItem
+                icon={<History size={18} />}
+                label="History"
+              />
+
+              <SidebarItem
+                icon={<Activity size={18} />}
+                label="Reports"
+              />
+
+              <div className="my-4 border-t border-slate-200" />
+
+              <SidebarItem
+                icon={<Settings size={18} />}
+                label="Settings"
+              />
+            </nav>
+          </aside>
+
+          <main className="ml-64 flex-1">
+            <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
+              <h1 className="text-lg font-semibold">
+                Test Automation Execution Platform
+              </h1>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-sm font-medium">
+                    Automation Engineer
+                  </div>
+
+                  <div className="text-xs text-slate-500">
+                    Administrator
+                  </div>
+                </div>
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-medium text-white">
+                  AE
+                </div>
+              </div>
+            </header>
+
+            <div className="mx-auto max-w-[1500px] p-8">
+              <section className="mb-8 flex items-end justify-between">
+                <div>
+                  <h2 className="text-3xl font-semibold tracking-tight">
+                    Automation Overview
+                  </h2>
+
+                  <p className="mt-2 text-sm text-slate-500">
+                    Discover, validate and execute automation projects from one place.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAddProjectOpen(true)
+                  }
+                  className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-slate-800"
+                >
+                  <FolderGit2 size={17} />
+                  Add Project
+                </button>
+              </section>
+
+              {projectError && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+                  <TriangleAlert
+                    size={18}
+                    className="mt-0.5 shrink-0"
+                  />
+
+                  <div>
+                    <div className="font-semibold">
+                      Project operation failed
+                    </div>
+
+                    <div className="mt-1">
+                      {projectError}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <section className="mb-8 grid grid-cols-4 gap-5">
+                <MetricCard
+                  title="Projects"
+                  value={String(
+                    metrics.projects,
+                  )}
+                  detail="Registered projects"
+                  icon={<FolderGit2 size={20} />}
+                />
+
+                <MetricCard
+                  title="Test Containers"
+                  value={String(
+                    metrics.containers,
+                  )}
+                  detail="Features, specs, modules..."
+                  icon={<TestTube2 size={20} />}
+                />
+
+                <MetricCard
+                  title="Tests"
+                  value={String(
+                    metrics.tests,
+                  )}
+                  detail="Discovered executable tests"
+                  icon={<Play size={20} />}
+                />
+
+                <MetricCard
+                  title="Labels"
+                  value={String(
+                    metrics.labels,
+                  )}
+                  detail="Tags, markers and labels"
+                  icon={<Tags size={20} />}
+                />
+              </section>
+
+              <section className="grid grid-cols-[1fr_360px] gap-6">
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-6 py-5">
+                    <h3 className="font-semibold">
+                      Projects
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Registered automation projects
+                    </p>
+                  </div>
+
+                  {loadingProjects && (
+                    <div className="px-6 py-10 text-center text-sm text-slate-500">
+                      Loading projects...
+                    </div>
+                  )}
+
+                  {!loadingProjects &&
+                    projects.length === 0 && (
+                      <div className="px-6 py-12 text-center">
+                        <FolderGit2
+                          size={30}
+                          className="mx-auto text-slate-300"
+                        />
+
+                        <div className="mt-3 font-medium">
+                          No projects registered
+                        </div>
+
+                        <div className="mt-1 text-sm text-slate-500">
+                          Add your first automation project.
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="divide-y divide-slate-100">
+                    {projects.map(
+                      (project) => (
+                        <ProjectRow
+                          key={project.id}
+                          project={project}
+                        />
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="mb-5">
+                      <h3 className="font-semibold">
+                        Platform Readiness
+                      </h3>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        Development infrastructure
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <ReadinessItem
+                        label="API"
+                        value="Available"
+                      />
+
+                      <ReadinessItem
+                        label="Project inspector"
+                        value="Available"
+                      />
+
+                      <ReadinessItem
+                        label="Filesystem browser"
+                        value="Available"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
+                    <h3 className="font-semibold">
+                      Quick execution
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      Execution runners will be enabled after project inspection and readiness are complete.
+                    </p>
+
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-5 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300"
+                    >
+                      <Play size={16} />
+                      Run tests
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <AddProjectDialog
+        open={addProjectOpen}
+        onClose={() =>
+          setAddProjectOpen(false)
+        }
+        onSubmit={
+          handleAddProject
+        }
+      />
+    </>
+  );
+}
+
+function ProjectRow({
+  project,
+}: {
+  project: ProjectManifest;
+}) {
+  const frameworkText =
+    project.frameworks.length > 0
+      ? project.frameworks
+          .map(
+            (framework) =>
+              framework.version
+                ? `${framework.type} ${framework.version}`
+                : framework.type,
+          )
+          .join(", ")
+      : "Framework not detected";
+
+  const runtimeText =
+    project.runtimes.length > 0
+      ? project.runtimes
+          .map(
+            (runtime) =>
+              runtime.versionConstraint
+                ? `${runtime.type} ${runtime.versionConstraint}`
+                : runtime.type,
+          )
+          .join(", ")
+      : "Runtime not detected";
+
+  const buildText =
+    project.buildTools.length > 0
+      ? project.buildTools
+          .map(
+            (build) =>
+              build.versionConstraint
+                ? `${build.type} ${build.versionConstraint}`
+                : build.type,
+          )
+          .join(", ")
+      : "Build tool not detected";
+
+  return (
+    <div className="px-6 py-5">
+      <div className="flex items-start justify-between gap-5">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+            <FolderGit2 size={19} />
+          </div>
+
+          <div className="min-w-0">
+            <div className="font-medium">
+              {project.name}
+            </div>
+
+            <div className="mt-1 truncate text-xs text-slate-500">
+              {project.source.location}
+            </div>
+          </div>
+        </div>
+
+        <InspectionBadge
+          status={
+            project.inspectionStatus
+          }
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-x-6 gap-y-2 text-xs">
+        <ProjectDetail
+          label="Framework"
+          value={frameworkText}
+        />
+
+        <ProjectDetail
+          label="Runtime"
+          value={runtimeText}
+        />
+
+        <ProjectDetail
+          label="Build"
+          value={buildText}
+        />
+
+        <ProjectDetail
+          label="Containers"
+          value={String(
+            project.testCatalog
+              .containers.length,
+          )}
+        />
+
+        <ProjectDetail
+          label="Tests"
+          value={String(
+            project.testCatalog
+              .testCount,
+          )}
+        />
+
+        <ProjectDetail
+          label="Labels"
+          value={String(
+            project.testCatalog
+              .labels.length,
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ProjectDetail({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <span className="text-slate-400">
+        {label}
+      </span>{" "}
+      <span className="break-words font-medium text-slate-700">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function InspectionBadge({
+  status,
+}: {
+  status:
+    ProjectManifest["inspectionStatus"];
+}) {
+  if (status === "INSPECTED") {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+        <CheckCircle2 size={14} />
+        Inspected
+      </span>
+    );
+  }
+
+  if (status === "PARTIAL") {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+        <TriangleAlert size={14} />
+        Partial
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+      <CircleDot size={14} />
+      {status === "FAILED"
+        ? "Failed"
+        : "Unsupported"}
+    </span>
+  );
+}
+
+function SidebarItem({
+  icon,
+  label,
+  active = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <button
+      className={[
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+        active
+          ? "bg-slate-950 text-white"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+      ].join(" ")}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function MetricCard({
+  title,
+  value,
+  detail,
+  icon,
+}: {
+  title: string;
+  value: string;
+  detail: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="text-sm font-medium text-slate-500">
+          {title}
+        </div>
+
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+          {icon}
+        </div>
+      </div>
+
+      <div className="text-3xl font-semibold tracking-tight">
+        {value}
+      </div>
+
+      <div className="mt-1 text-xs text-slate-500">
+        {detail}
+      </div>
+    </div>
+  );
+}
+
+function ReadinessItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-slate-600">
+        {label}
+      </span>
+
+      <span className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+        <CheckCircle2 size={15} />
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export default App;

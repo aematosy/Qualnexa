@@ -1,0 +1,13 @@
+{
+  "name": "test-automation-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names BACKEND,FRONTEND --prefix-colors blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
