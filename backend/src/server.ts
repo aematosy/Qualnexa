@@ -456,15 +456,18 @@ app.post(
 
 app.get(
   "/api/auth/oauth-config",
-  async () => {
+  async (request) => {
+    const backendUrl = `${request.protocol}://${request.hostname}:${port}`;
     return {
       google: {
         enabled: !!process.env.GOOGLE_CLIENT_ID?.trim(),
         clientId: process.env.GOOGLE_CLIENT_ID?.trim() || "",
+        redirectUri: `${backendUrl}/api/auth/oauth/google/callback`,
       },
       github: {
         enabled: !!process.env.GITHUB_CLIENT_ID?.trim(),
         clientId: process.env.GITHUB_CLIENT_ID?.trim() || "",
+        redirectUri: `${backendUrl}/api/auth/oauth/github/callback`,
       },
     };
   },

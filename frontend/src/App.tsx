@@ -87,7 +87,7 @@ function App() {
   const [passwordInput, setPasswordInput] = useState("");
   const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
   const [showVerificationReminder, setShowVerificationReminder] = useState(false);
-  const [oauthConfig, setOAuthConfig] = useState<{ google: { enabled: boolean; clientId: string }; github: { enabled: boolean; clientId: string } } | null>(null);
+  const [oauthConfig, setOAuthConfig] = useState<{ google: { enabled: boolean; clientId: string; redirectUri: string }; github: { enabled: boolean; clientId: string; redirectUri: string } } | null>(null);
 
   useTheme();
 
@@ -288,9 +288,9 @@ function App() {
 
   async function handleOAuth(provider: "google" | "github") {
     if (provider === "google") {
-      // Use clientId from config if available, otherwise use default placeholder
+      // Use clientId and redirectUri from config (server provides correct backend URL)
       const clientId = oauthConfig?.google.clientId || "YOUR_GOOGLE_CLIENT_ID";
-      const redirectUri = `${window.location.origin}/api/auth/oauth/google/callback`;
+      const redirectUri = oauthConfig?.google.redirectUri || `http://127.0.0.1:8080/api/auth/oauth/google/callback`;
       const scope = "openid email profile";
       const responseType = "code";
 
@@ -305,7 +305,7 @@ function App() {
       window.location.assign(authUrl);
     } else if (provider === "github") {
       const clientId = oauthConfig?.github.clientId || "YOUR_GITHUB_CLIENT_ID";
-      const redirectUri = `${window.location.origin}/api/auth/oauth/github/callback`;
+      const redirectUri = oauthConfig?.github.redirectUri || `http://127.0.0.1:8080/api/auth/oauth/github/callback`;
       const scope = "user:email";
 
       const authUrl = `https://github.com/login/oauth/authorize?${new URLSearchParams({
