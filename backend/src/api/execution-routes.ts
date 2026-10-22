@@ -1,3 +1,15 @@
+import {
+  createReadStream,
+} from "node:fs";
+
+import {
+  stat,
+} from "node:fs/promises";
+
+import {
+  join,
+} from "node:path";
+
 import type {
   FastifyInstance,
 } from "fastify";
@@ -15,8 +27,26 @@ import type {
 } from "../core/execution/model.js";
 
 import {
+  ExecutionService,
+} from "../core/execution/execution-service.js";
+
+import {
   getProject,
 } from "../core/project/project-store.js";
+
+import {
+  getExecutionJob,
+  getExecutionPlan,
+  saveExecutionPlan,
+} from "../core/execution/execution-store.js";
+
+import {
+  getExecutionPreferences,
+} from "../core/execution/execution-preferences-store.js";
+
+import {
+  artifactsDirectoryFor,
+} from "../config/artifacts-dir.js";
 
 const selectionSchema =
   z.discriminatedUnion(
@@ -103,8 +133,17 @@ const requestSchema =
         .optional(),
   });
 
+const startJobSchema =
+  z.object({
+    planId:
+      z.string()
+        .min(1),
+  });
+
 export async function executionRoutes(
   app: FastifyInstance,
+  executionService:
+    ExecutionService,
 ): Promise<void> {
 
   const planner =
@@ -164,10 +203,28 @@ export async function executionRoutes(
               parsed.data.parameters,
           };
 
-        return planner.createPlan(
-          project,
-          executionRequest,
+        const preferences =
+          getExecutionPreferences(
+            project.id,
+          );
+
+        const plan =
+          planner.createPlan(
+            project,
+            executionRequest,
+            {
+              hasCustomCommand:
+                Boolean(
+                  preferences?.customCommand,
+                ),
+            },
+          );
+
+        saveExecutionPlan(
+          plan,
         );
+
+        return plan;
 
       } catch (error) {
         return reply
@@ -179,6 +236,251 @@ export async function executionRoutes(
                 : "Unable to create execution plan.",
           });
       }
+    },
+  );
+
+  app.post(
+    "/api/executions/jobs",
+    async (
+      request,
+      reply,
+    ) => {
+
+      const parsed =
+        startJobSchema.safeParse(
+          request.body,
+        );
+
+      if (!parsed.success) {
+        return reply
+          .code(400)
+          .send({
+            message:
+              "Invalid job request.",
+
+            issues:
+              parsed.error.issues,
+          });
+      }
+
+      const plan =
+        getExecutionPlan(
+          parsed.data.planId,
+        );
+
+      if (!plan) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution plan not found. Prepare it again before running.",
+          });
+      }
+
+      if (plan.status !== "READY") {
+        return reply
+          .code(400)
+          .send({
+            message:
+              "Execution plan is not ready.",
+          });
+      }
+
+      const project =
+        getProject(
+          plan.projectId,
+        );
+
+      if (!project) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Project not found.",
+          });
+      }
+
+      const preferences =
+        getExecutionPreferences(
+          project.id,
+        );
+
+      const job =
+        executionService.createJob(
+          project,
+          plan,
+        );
+
+      void executionService.run(
+        job,
+        project,
+        plan,
+        preferences,
+      );
+
+      return reply
+        .code(202)
+        .send(job);
+    },
+  );
+
+  app.get(
+    "/api/executions/jobs/:id",
+    async (
+      request,
+      reply,
+    ) => {
+
+      const { id } =
+        request.params as {
+          id: string;
+        };
+
+      const job =
+        getExecutionJob(id);
+
+      if (!job) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution job not found.",
+          });
+      }
+
+      return job;
+    },
+  );
+
+  app.post(
+    "/api/executions/jobs/:id/cancel",
+    async (
+      request,
+      reply,
+    ) => {
+
+      const { id } =
+        request.params as {
+          id: string;
+        };
+
+      const job =
+        getExecutionJob(id);
+
+      if (!job) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution job not found.",
+          });
+      }
+
+      if (
+        job.status !== "QUEUED" &&
+        job.status !== "RUNNING"
+      ) {
+        return reply
+          .code(400)
+          .send({
+            message:
+              "Execution job is not running.",
+          });
+      }
+
+      const cancelled =
+        executionService.requestCancellation(
+          id,
+        );
+
+      if (!cancelled) {
+        return reply
+          .code(409)
+          .send({
+            message:
+              "Execution process is not available yet. Try again in a moment.",
+          });
+      }
+
+      return reply
+        .code(202)
+        .send({
+          message:
+            "Cancellation requested.",
+        });
+    },
+  );
+
+  app.get(
+    "/api/executions/jobs/:id/artifacts/:index/download",
+    async (
+      request,
+      reply,
+    ) => {
+
+      const { id, index } =
+        request.params as {
+          id: string;
+          index: string;
+        };
+
+      const job =
+        getExecutionJob(id);
+
+      if (!job) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution job not found.",
+          });
+      }
+
+      const artifact =
+        job.artifacts[
+          Number(index)
+        ];
+
+      if (!artifact) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Artifact not found.",
+          });
+      }
+
+      const absolutePath =
+        join(
+          artifactsDirectoryFor(
+            id,
+          ),
+          artifact.relativePath,
+        );
+
+      try {
+        await stat(
+          absolutePath,
+        );
+      } catch {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Artifact file is no longer available.",
+          });
+      }
+
+      reply.header(
+        "Content-Disposition",
+        `attachment; filename="${artifact.name}"`,
+      );
+
+      return reply.send(
+        createReadStream(
+          absolutePath,
+        ),
+      );
     },
   );
 }

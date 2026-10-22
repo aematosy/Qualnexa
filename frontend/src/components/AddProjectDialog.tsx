@@ -37,7 +37,7 @@ export function AddProjectDialog({
     useState<ProjectSourceType>("LOCAL");
 
   const [localMode, setLocalMode] =
-    useState<LocalSourceMode>("FOLDER");
+    useState<LocalSourceMode>("PATH");
 
   const [name, setName] = useState("");
 
@@ -87,7 +87,7 @@ export function AddProjectDialog({
 
   function reset() {
     setSourceType("LOCAL");
-    setLocalMode("FOLDER");
+    setLocalMode("PATH");
     setName("");
     setRepositoryUrl("");
     setBranch("main");
@@ -154,15 +154,15 @@ export function AddProjectDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-        <header className="flex shrink-0 items-start justify-between border-b border-slate-200 bg-white px-7 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md">
+      <div className="glass-panel animate-pop-in flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[22px] border border-[var(--hairline)] shadow-[0_24px_64px_rgba(0,0,0,0.25)]">
+        <header className="flex shrink-0 items-start justify-between border-b border-[var(--hairline)] px-7 py-5">
           <div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-[17px] font-semibold tracking-tight">
               Add automation project
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[12.5px] text-[var(--text-quaternary)]">
               Select where the automation project comes from.
             </p>
           </div>
@@ -170,14 +170,14 @@ export function AddProjectDialog({
           <button
             type="button"
             onClick={close}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-[var(--text-quaternary)] transition hover:bg-[var(--fill-tertiary)] hover:text-[var(--text-primary)]"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6">
-          <label className="mb-2 block text-sm font-medium">
+          <label className="mb-2 block text-[12.5px] font-medium text-[var(--text-secondary)]">
             Project name
           </label>
 
@@ -187,10 +187,10 @@ export function AddProjectDialog({
               setName(event.target.value)
             }
             placeholder="Example: Guidewire Accelerators"
-            className="mb-7 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className="mb-7 w-full rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-3 text-[13px] outline-none transition focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/25"
           />
 
-          <div className="mb-3 text-sm font-medium">
+          <div className="mb-3 text-[12.5px] font-medium text-[var(--text-secondary)]">
             Project source
           </div>
 
@@ -199,7 +199,7 @@ export function AddProjectDialog({
               active={sourceType === "LOCAL"}
               title="Local project"
               description="Folder, ZIP or local path"
-              icon={<FolderGit2 size={20} />}
+              icon={<FolderGit2 size={19} />}
               onClick={() => setSourceType("LOCAL")}
             />
 
@@ -207,7 +207,7 @@ export function AddProjectDialog({
               active={sourceType === "GITHUB"}
               title="GitHub"
               description="Clone a repository"
-              icon={<GitBranch size={20} />}
+              icon={<GitBranch size={19} />}
               onClick={() => setSourceType("GITHUB")}
             />
 
@@ -215,7 +215,7 @@ export function AddProjectDialog({
               active={sourceType === "BITBUCKET"}
               title="Bitbucket"
               description="Clone a repository"
-              icon={<GitBranch size={20} />}
+              icon={<GitBranch size={19} />}
               onClick={() => setSourceType("BITBUCKET")}
             />
           </div>
@@ -251,8 +251,8 @@ export function AddProjectDialog({
           )}
         </div>
 
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-7 py-4">
-          <div className="hidden text-xs text-slate-500 md:block">
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-[var(--hairline)] bg-[var(--fill-quinary)] px-7 py-4">
+          <div className="hidden text-[11.5px] text-[var(--text-quaternary)] md:block">
             The project will be analyzed before it becomes executable.
           </div>
 
@@ -260,7 +260,7 @@ export function AddProjectDialog({
             <button
               type="button"
               onClick={close}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium transition hover:bg-slate-100"
+              className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-medium transition hover:bg-[var(--fill-tertiary)] active:scale-[0.97]"
             >
               Cancel
             </button>
@@ -269,7 +269,7 @@ export function AddProjectDialog({
               type="button"
               disabled={!canSubmit}
               onClick={handleSubmit}
-              className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-full bg-[#0a84ff] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(10,132,255,0.4)] transition hover:bg-[#0074e8] active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-[var(--fill-secondary)] disabled:text-[var(--text-quinary)] disabled:shadow-none"
             >
               Analyze project
             </button>
@@ -312,27 +312,27 @@ function SourceButton({
       type="button"
       onClick={onClick}
       className={[
-        "relative rounded-xl border p-4 text-left transition",
+        "relative rounded-[16px] border p-4 text-left transition",
         active
-          ? "border-slate-950 bg-slate-50 ring-1 ring-slate-950"
-          : "border-slate-200 bg-white hover:border-slate-400",
+          ? "border-[#0a84ff] bg-[#0a84ff]/[0.06] ring-1 ring-[#0a84ff]/40"
+          : "border-[var(--hairline-strong)] bg-[var(--surface)] hover:border-[var(--hairline-heavy)]",
       ].join(" ")}
     >
       {active && (
-        <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950 text-white">
+        <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[#0a84ff] text-white">
           <Check size={13} />
         </div>
       )}
 
-      <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+      <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--fill-tertiary)] text-[var(--text-secondary)]">
         {icon}
       </div>
 
-      <div className="text-sm font-semibold">
+      <div className="text-[13px] font-semibold">
         {title}
       </div>
 
-      <div className="mt-1 text-xs text-slate-500">
+      <div className="mt-1 text-[11.5px] text-[var(--text-quaternary)]">
         {description}
       </div>
     </button>
@@ -365,16 +365,24 @@ function LocalSource({
 
   return (
     <div>
-      <div className="mb-3 text-sm font-medium">
+      <div className="mb-3 text-[12.5px] font-medium text-[var(--text-secondary)]">
         Local source
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         <LocalModeButton
+          active={mode === "PATH"}
+          title="Local path"
+          description="Path visible to backend"
+          icon={<FolderGit2 size={17} />}
+          onClick={() => onModeChange("PATH")}
+        />
+
+        <LocalModeButton
           active={mode === "FOLDER"}
           title="Folder"
           description="Select project directory"
-          icon={<Folder size={18} />}
+          icon={<Folder size={17} />}
           onClick={() => onModeChange("FOLDER")}
         />
 
@@ -382,41 +390,33 @@ function LocalSource({
           active={mode === "ZIP"}
           title="ZIP archive"
           description="Upload compressed project"
-          icon={<FolderArchive size={18} />}
+          icon={<FolderArchive size={17} />}
           onClick={() => onModeChange("ZIP")}
-        />
-
-        <LocalModeButton
-          active={mode === "PATH"}
-          title="Local path"
-          description="Path visible to backend"
-          icon={<FolderGit2 size={18} />}
-          onClick={() => onModeChange("PATH")}
         />
       </div>
 
       {mode === "FOLDER" && (
         <div>
-          <label className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 transition hover:border-slate-500">
+          <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-dashed border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-5 py-6 transition hover:border-[#0a84ff]/50">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shadow-sm">
-                <Folder size={21} />
+              <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+                <Folder size={20} />
               </div>
 
               <div>
-                <div className="text-sm font-medium">
+                <div className="text-[13px] font-medium">
                   {files.length > 0
                     ? `${files.length} files selected`
                     : "Select project folder"}
                 </div>
 
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-[11.5px] text-[var(--text-quaternary)]">
                   The browser will upload the selected project contents.
                 </div>
               </div>
             </div>
 
-            <span className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium">
+            <span className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-3 py-2 text-[11.5px] font-medium">
               Browse
             </span>
 
@@ -438,7 +438,7 @@ function LocalSource({
           </label>
 
           {files.length > 0 && (
-            <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
+            <div className="mt-3 rounded-[14px] border border-[#34c759]/30 bg-[#34c759]/10 px-4 py-3 text-[11.5px] text-[var(--badge-green-text)]">
               Folder selected successfully. The project contents are ready for analysis.
             </div>
           )}
@@ -446,26 +446,26 @@ function LocalSource({
       )}
 
       {mode === "ZIP" && (
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 transition hover:border-slate-500">
+        <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-dashed border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-5 py-6 transition hover:border-[#0a84ff]/50">
           <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white shadow-sm">
-              <FolderArchive size={21} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+              <FolderArchive size={20} />
             </div>
 
             <div>
-              <div className="text-sm font-medium">
+              <div className="text-[13px] font-medium">
                 {archive
                   ? archive.name
                   : "Select project ZIP"}
               </div>
 
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 text-[11.5px] text-[var(--text-quaternary)]">
                 Upload the complete automation project.
               </div>
             </div>
           </div>
 
-          <span className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium">
+          <span className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-3 py-2 text-[11.5px] font-medium">
             Browse
           </span>
 
@@ -484,30 +484,32 @@ function LocalSource({
 
       {mode === "PATH" && (
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <label className="mb-2 block text-[12.5px] font-medium text-[var(--text-secondary)]">
             Project path
           </label>
 
           <div className="flex gap-3">
             <input
+              autoFocus
+              type="text"
               value={path}
               onChange={(event) =>
                 onPathChange(event.target.value)
               }
-              placeholder="C:\Users\e-anty\Projects\my-project"
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 font-mono text-sm outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+              placeholder="/Users/me/Projects/my-project or C:\Users\me\Projects\my-project"
+              className="min-w-0 flex-1 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-3 font-mono text-[12.5px] outline-none transition focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/25"
             />
 
             <button
               type="button"
               onClick={onBrowsePath}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-medium transition hover:bg-slate-50"
+              className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-5 py-3 text-[13px] font-medium transition hover:bg-[var(--fill-tertiary)] active:scale-[0.97]"
             >
               Browse
             </button>
           </div>
 
-          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800">
+          <div className="mt-3 rounded-[14px] border border-[#0a84ff]/20 bg-[#0a84ff]/8 px-4 py-3 text-[11.5px] leading-5 text-[var(--badge-blue-text)]">
             Select a directory accessible to the platform backend.
           </div>
         </div>
@@ -522,34 +524,39 @@ function LocalModeButton({
   description,
   icon,
   onClick,
+  disabled,
 }: {
   active: boolean;
   title: string;
   description: string;
   icon: React.ReactNode;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       className={[
-        "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition",
-        active
-          ? "border-slate-950 bg-slate-50 ring-1 ring-slate-950"
-          : "border-slate-200 bg-white hover:border-slate-400",
+        "flex items-center gap-3 rounded-[14px] border px-4 py-3 text-left transition",
+        disabled
+          ? "cursor-not-allowed border-[var(--hairline-strong)] bg-[var(--fill-quaternary)] opacity-60"
+          : active
+            ? "border-[#0a84ff] bg-[#0a84ff]/[0.06] ring-1 ring-[#0a84ff]/40"
+            : "border-[var(--hairline-strong)] bg-[var(--surface)] hover:border-[var(--hairline-heavy)]",
       ].join(" ")}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[var(--fill-tertiary)]">
         {icon}
       </div>
 
       <div>
-        <div className="text-sm font-medium">
+        <div className="text-[13px] font-medium">
           {title}
         </div>
 
-        <div className="mt-0.5 text-xs text-slate-500">
+        <div className="mt-0.5 text-[11.5px] text-[var(--text-quaternary)]">
           {description}
         </div>
       </div>
@@ -579,7 +586,7 @@ function RepositorySource({
   return (
     <div className="space-y-5">
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <label className="mb-2 block text-[12.5px] font-medium text-[var(--text-secondary)]">
           Repository URL
         </label>
 
@@ -593,13 +600,13 @@ function RepositorySource({
               ? "https://github.com/organization/repository.git"
               : "https://bitbucket.org/workspace/repository.git"
           }
-          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+          className="w-full rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-3 text-[13px] outline-none transition focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/25"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <label className="mb-2 block text-[12.5px] font-medium text-[var(--text-secondary)]">
             Branch
           </label>
 
@@ -608,19 +615,19 @@ function RepositorySource({
             onChange={(event) =>
               onBranchChange(event.target.value)
             }
-            className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className="w-full rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-3 text-[13px] outline-none transition focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/25"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <label className="mb-2 block text-[12.5px] font-medium text-[var(--text-secondary)]">
             Authentication
           </label>
 
           <div className="relative">
             <KeyRound
-              size={16}
-              className="absolute left-3 top-3.5 text-slate-400"
+              size={15}
+              className="absolute left-3 top-3.5 text-[var(--text-quinary)]"
             />
 
             <select
@@ -632,7 +639,7 @@ function RepositorySource({
                     | "TOKEN",
                 )
               }
-              className="w-full appearance-none rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+              className="w-full appearance-none rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--surface)] py-3 pl-10 pr-4 text-[13px] outline-none transition focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/25"
             >
               <option value="NONE">
                 Public repository
@@ -647,17 +654,10 @@ function RepositorySource({
       </div>
 
       {authenticationType === "TOKEN" && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+        <div className="rounded-[14px] border border-[#ff9f0a]/30 bg-[#ff9f0a]/10 px-4 py-3 text-[11.5px] leading-5 text-[var(--badge-orange-text)]">
           Token configuration will be connected to the platform secret store. Credentials will not be persisted in project metadata.
         </div>
       )}
     </div>
   );
 }
-
-
-
-
-
-
-

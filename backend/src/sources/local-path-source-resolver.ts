@@ -4,8 +4,8 @@ import {
 } from "node:fs/promises";
 
 import {
-  resolve,
-} from "node:path";
+  assertPathWithinAllowedRoots,
+} from "../config/allowed-roots.js";
 
 import type {
   ProjectWorkspace,
@@ -37,7 +37,9 @@ export class LocalPathSourceResolver
       );
     }
 
-    const root = resolve(source.location);
+    const root = assertPathWithinAllowedRoots(
+      source.location,
+    );
 
     await access(root);
 

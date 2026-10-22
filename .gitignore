@@ -27,3 +27,11 @@ workspace/
 artifacts/
 
 node_modules/
+.aider*
+
+# Build outputs
+backend/dist/
+frontend/dist/
+
+# Local AI/editor metadata
+backend/.axet-code/

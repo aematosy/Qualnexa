@@ -216,6 +216,37 @@ export class KarateFrameworkAdapter
           );
         }
       }
+
+      const defaultFallbackPatterns = [
+        /karate\.env\s*\|\|\s*["'`]([^"'`]+)["'`]/,
+        /\benv\s*=\s*karate\.env\s*\|\|\s*["'`]([^"'`]+)["'`]/,
+      ];
+
+      for (
+        const pattern
+        of defaultFallbackPatterns
+      ) {
+        const match =
+          content.match(pattern);
+
+        const id =
+          match?.[1]?.trim();
+
+        if (!id) {
+          continue;
+        }
+
+        environments.set(
+          id,
+          {
+            id,
+            displayName: id,
+            source:
+              "Karate configuration (default fallback)",
+            isDefault: true,
+          },
+        );
+      }
     }
 
     return [

@@ -1,7 +1,10 @@
 import {
   ChevronLeft,
+  Download,
+  File as FileIcon,
   Folder,
   HardDrive,
+  Home,
   X,
 } from "lucide-react";
 
@@ -10,9 +13,17 @@ import {
   useState,
 } from "react";
 
+type DirectoryItemKind =
+  | "home"
+  | "desktop"
+  | "documents"
+  | "downloads"
+  | "drive";
+
 type DirectoryItem = {
   name: string;
   path: string;
+  kind?: DirectoryItemKind;
 };
 
 type DirectoryResponse = {
@@ -137,15 +148,15 @@ export function DirectoryBrowserDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-6">
-      <div className="flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <header className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-6 backdrop-blur-md">
+      <div className="glass-panel animate-pop-in flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-[22px] border border-[var(--hairline)] shadow-[0_24px_64px_rgba(0,0,0,0.25)]">
+        <header className="flex items-center justify-between border-b border-[var(--hairline)] px-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-[16px] font-semibold tracking-tight">
               Select project directory
             </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-[11.5px] text-[var(--text-quaternary)]">
               Browse directories visible to the platform backend.
             </p>
           </div>
@@ -153,13 +164,13 @@ export function DirectoryBrowserDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 hover:bg-slate-100"
+            className="rounded-full p-2 transition hover:bg-[var(--fill-tertiary)]"
           >
-            <X size={19} />
+            <X size={18} />
           </button>
         </header>
 
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-3">
+        <div className="border-b border-[var(--hairline)] bg-[var(--fill-quinary)] px-6 py-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -171,12 +182,12 @@ export function DirectoryBrowserDialog({
                   void loadRoots();
                 }
               }}
-              className="rounded-lg border border-slate-300 bg-white p-2 disabled:opacity-40"
+              className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] p-2 transition hover:bg-[var(--fill-tertiary)] disabled:opacity-40"
             >
-              <ChevronLeft size={17} />
+              <ChevronLeft size={16} />
             </button>
 
-            <div className="min-w-0 flex-1 truncate rounded-lg border border-slate-300 bg-white px-4 py-2 font-mono text-sm">
+            <div className="min-w-0 flex-1 truncate rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2 font-mono text-[12.5px]">
               {currentPath ?? "Computer"}
             </div>
           </div>
@@ -184,13 +195,13 @@ export function DirectoryBrowserDialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 rounded-[14px] border border-[#ff3b30]/25 bg-[#ff3b30]/10 px-4 py-3 text-[12.5px] text-[var(--badge-red-text)]">
               {error}
             </div>
           )}
 
           {loading && (
-            <div className="p-6 text-center text-sm text-slate-500">
+            <div className="p-6 text-center text-[12.5px] text-[var(--text-quaternary)]">
               Loading...
             </div>
           )}
@@ -204,16 +215,16 @@ export function DirectoryBrowserDialog({
                 onClick={() =>
                   void browse(root.path)
                 }
-                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-slate-100"
+                className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left transition hover:bg-[var(--fill-tertiary)]"
               >
-                <HardDrive size={19} />
+                <RootIcon kind={root.kind} />
 
                 <div>
-                  <div className="text-sm font-medium">
+                  <div className="text-[13px] font-medium">
                     {root.name}
                   </div>
 
-                  <div className="text-xs text-slate-500">
+                  <div className="text-[11.5px] text-[var(--text-quaternary)]">
                     {root.path}
                   </div>
                 </div>
@@ -229,16 +240,16 @@ export function DirectoryBrowserDialog({
                 onClick={() =>
                   void browse(directory.path)
                 }
-                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-slate-100"
+                className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left transition hover:bg-[var(--fill-tertiary)]"
               >
-                <Folder size={19} />
+                <Folder size={18} className="text-[#0a84ff]" />
 
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">
+                  <div className="truncate text-[13px] font-medium">
                     {directory.name}
                   </div>
 
-                  <div className="truncate text-xs text-slate-500">
+                  <div className="truncate text-[11.5px] text-[var(--text-quaternary)]">
                     {directory.path}
                   </div>
                 </div>
@@ -246,11 +257,11 @@ export function DirectoryBrowserDialog({
             ))}
         </div>
 
-        <footer className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+        <footer className="flex items-center justify-end gap-3 border-t border-[var(--hairline)] bg-[var(--fill-quinary)] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium"
+            className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2.5 text-[13px] font-medium transition hover:bg-[var(--fill-tertiary)] active:scale-[0.97]"
           >
             Cancel
           </button>
@@ -263,7 +274,7 @@ export function DirectoryBrowserDialog({
                 onSelect(currentPath);
               }
             }}
-            className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-medium text-white disabled:bg-slate-300"
+            className="rounded-full bg-[#0a84ff] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(10,132,255,0.4)] transition hover:bg-[#0074e8] active:scale-[0.97] disabled:bg-[var(--fill-secondary)] disabled:text-[var(--text-quinary)] disabled:shadow-none"
           >
             Select this folder
           </button>
@@ -271,4 +282,23 @@ export function DirectoryBrowserDialog({
       </div>
     </div>
   );
+}
+
+function RootIcon({
+  kind,
+}: {
+  kind?: DirectoryItemKind;
+}) {
+  switch (kind) {
+    case "home":
+      return <Home size={18} className="text-[#0a84ff]" />;
+    case "desktop":
+      return <FileIcon size={18} className="text-[#0a84ff]" />;
+    case "documents":
+      return <Folder size={18} className="text-[#0a84ff]" />;
+    case "downloads":
+      return <Download size={18} className="text-[#0a84ff]" />;
+    default:
+      return <HardDrive size={18} className="text-[var(--text-tertiary)]" />;
+  }
 }

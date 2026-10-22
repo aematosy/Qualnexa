@@ -1,0 +1,4 @@
+export const MAX_UPLOAD_FILE_SIZE_BYTES =
+  50 * 1024 * 1024;
+
+export const MAX_UPLOAD_FILE_COUNT = 5000;

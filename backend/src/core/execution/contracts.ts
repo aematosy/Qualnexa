@@ -5,7 +5,9 @@ import type {
 import type {
   BuildInvocation,
   ExecutionPlan,
+  ProcessOutputListener,
   ProcessResult,
+  ProcessSpawnListener,
   ProcessSpecification,
 } from "./model.js";
 
@@ -17,7 +19,7 @@ export interface ExecutionRecipeProvider {
   createInvocation(
     project: ProjectManifest,
     plan: ExecutionPlan,
-  ): BuildInvocation;
+  ): Promise<BuildInvocation>;
 }
 
 export interface BuildCommandAdapter {
@@ -34,5 +36,7 @@ export interface BuildCommandAdapter {
 export interface ProcessExecutor {
   execute(
     specification: ProcessSpecification,
+    onOutput?: ProcessOutputListener,
+    onSpawn?: ProcessSpawnListener,
   ): Promise<ProcessResult>;
 }

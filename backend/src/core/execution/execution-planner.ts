@@ -19,7 +19,14 @@ export class ExecutionPlanner {
   createPlan(
     project: ProjectManifest,
     request: ExecutionRequest,
+    options?: {
+      hasCustomCommand?: boolean;
+    },
   ): ExecutionPlan {
+
+    const hasCustomCommand =
+      options?.hasCustomCommand ??
+      false;
 
     const selectedTests =
       resolveSelection(
@@ -44,7 +51,9 @@ export class ExecutionPlanner {
       status:
         project.frameworks.length > 0
           ? "PASS"
-          : "BLOCKED",
+          : hasCustomCommand
+            ? "WARNING"
+            : "BLOCKED",
       message:
         project.frameworks.length > 0
           ? project.frameworks
@@ -53,7 +62,9 @@ export class ExecutionPlanner {
                   framework.displayName,
               )
               .join(", ")
-          : "No supported framework detected.",
+          : hasCustomCommand
+            ? "No supported framework detected, but a custom command is configured."
+            : "No supported framework detected.",
     });
 
     readiness.push({
@@ -62,7 +73,9 @@ export class ExecutionPlanner {
       status:
         project.runtimes.length > 0
           ? "PASS"
-          : "BLOCKED",
+          : hasCustomCommand
+            ? "WARNING"
+            : "BLOCKED",
       message:
         project.runtimes.length > 0
           ? project.runtimes
@@ -73,7 +86,9 @@ export class ExecutionPlanner {
                     : runtime.type,
               )
               .join(", ")
-          : "No runtime requirement detected.",
+          : hasCustomCommand
+            ? "No runtime requirement detected, but a custom command is configured."
+            : "No runtime requirement detected.",
     });
 
     readiness.push({
@@ -82,7 +97,9 @@ export class ExecutionPlanner {
       status:
         project.buildTools.length > 0
           ? "PASS"
-          : "BLOCKED",
+          : hasCustomCommand
+            ? "WARNING"
+            : "BLOCKED",
       message:
         project.buildTools.length > 0
           ? project.buildTools
@@ -93,7 +110,9 @@ export class ExecutionPlanner {
                     : build.type,
               )
               .join(", ")
-          : "No build tool detected.",
+          : hasCustomCommand
+            ? "No build tool detected, but a custom command is configured."
+            : "No build tool detected.",
     });
 
     readiness.push({
@@ -102,11 +121,15 @@ export class ExecutionPlanner {
       status:
         selectedTests.length > 0
           ? "PASS"
-          : "BLOCKED",
+          : hasCustomCommand
+            ? "WARNING"
+            : "BLOCKED",
       message:
         selectedTests.length > 0
           ? `${selectedTests.length} test(s) selected.`
-          : "Selection did not match any tests.",
+          : hasCustomCommand
+            ? "No discovered tests matched this selection, but a custom command is configured and will run regardless."
+            : "Selection did not match any tests.",
     });
 
     const blocked =

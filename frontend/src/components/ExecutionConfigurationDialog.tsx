@@ -30,9 +30,6 @@ import type {
   JdkCandidate,
 } from "../types/environment";
 
-import {
-  TestTreePanel,
-} from "./TestTreePanel";
 
 type Props = {
   project: ProjectManifest | null;
@@ -483,28 +480,6 @@ export function ExecutionConfigurationDialog({
                 selectionDescription
               }
             />
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center gap-2 text-[13px] font-semibold">
-              <Play size={15} className="text-accent" />
-              Features & Scenarios
-            </div>
-
-            <div className="max-h-64 overflow-y-auto rounded-[16px] border border-[var(--hairline)] bg-[var(--fill-quinary)]">
-              {activeProject.testCatalog.containers.length > 0 ? (
-                <TestTreePanel
-                  project={activeProject}
-                  onSelectTest={(testSelection) => {
-                    onConfirm(activeProject.id, testSelection, environment);
-                  }}
-                />
-              ) : (
-                <div className="p-4 text-[12.5px] text-[var(--text-quaternary)]">
-                  No tests found in this project
-                </div>
-              )}
-            </div>
           </section>
 
           {requiresLabelSelection && (

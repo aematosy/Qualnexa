@@ -90,7 +90,9 @@ export type ExecutionJobStatus =
   | "QUEUED"
   | "RUNNING"
   | "PASSED"
-  | "FAILED";
+  | "FAILED"
+  | "TIMED_OUT"
+  | "CANCELLED";
 
 export interface BuildInvocation {
   tasks: string[];
@@ -101,6 +103,8 @@ export interface BuildInvocation {
   >;
 
   arguments: string[];
+
+  testClassFilter?: string[] | undefined;
 }
 
 export interface ProcessSpecification {
@@ -114,7 +118,28 @@ export interface ProcessSpecification {
     string,
     string
   >;
+
+  timeoutMs?: number | undefined;
 }
+
+export interface ProcessOutputChunk {
+  stream: "stdout" | "stderr";
+  text: string;
+}
+
+export type ProcessOutputListener = (
+  chunk: ProcessOutputChunk,
+) => void;
+
+export interface ProcessHandle {
+  kill(
+    signal?: "SIGTERM" | "SIGKILL",
+  ): void;
+}
+
+export type ProcessSpawnListener = (
+  handle: ProcessHandle,
+) => void;
 
 export interface ProcessResult {
   exitCode: number;
@@ -126,6 +151,46 @@ export interface ProcessResult {
   startedAt: string;
 
   finishedAt: string;
+
+  timedOut: boolean;
+}
+
+export interface ExecutionResult {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  flaky: number;
+
+  durationMs?: number | undefined;
+
+  source: string;
+}
+
+export interface ExecutionArtifact {
+  name: string;
+  relativePath: string;
+  sizeBytes: number;
+}
+
+export interface CustomCommandConfig {
+  executable: string;
+
+  arguments: string[];
+
+  workingDirectory?: string | undefined;
+
+  environment?: Record<string, string> | undefined;
+
+  timeoutMinutes?: number | undefined;
+}
+
+export interface ExecutionPreferences {
+  projectId: string;
+
+  jdkPath?: string | undefined;
+
+  customCommand?: CustomCommandConfig | undefined;
 }
 
 export interface ExecutionJob {
@@ -135,11 +200,19 @@ export interface ExecutionJob {
 
   projectId: string;
 
+  projectName: string;
+
+  frameworks: string[];
+
+  environment?: string | undefined;
+
   status: ExecutionJobStatus;
 
   startedAt?: string | undefined;
 
   finishedAt?: string | undefined;
+
+  durationMs?: number | undefined;
 
   exitCode?: number | undefined;
 
@@ -148,4 +221,10 @@ export interface ExecutionJob {
   stderr: string;
 
   error?: string | undefined;
+
+  command?: string | undefined;
+
+  result?: ExecutionResult | undefined;
+
+  artifacts: ExecutionArtifact[];
 }

@@ -554,21 +554,21 @@ function App() {
     };
   }, [projects]);
 
-  if (selectedProjectId) {
-    const selectedProject = projects.find((p) => p.id === selectedProjectId);
-    if (selectedProject) {
-      return (
-        <ProjectDetailsPage
-          project={selectedProject}
-          onBack={() => setSelectedProjectId(null)}
-          onExecute={(selection) => configureExecution(selectedProjectId, selection)}
-        />
-      );
-    }
-  }
+  const selectedProject = selectedProjectId
+    ? projects.find((p) => p.id === selectedProjectId) ?? null
+    : null;
 
   return (
     <>
+      {selectedProject ? (
+        <ProjectDetailsPage
+          project={selectedProject}
+          onBack={() => setSelectedProjectId(null)}
+          onExecute={(selection) => {
+            configureExecution(selectedProject.id, selection);
+          }}
+        />
+      ) : (
       <div className="min-h-screen text-[var(--text-primary)]">
         <div className="flex min-h-screen">
           <aside className="glass-sidebar fixed inset-y-0 left-0 w-64 border-r border-[var(--hairline)]">
@@ -704,6 +704,7 @@ function App() {
           </main>
         </div>
       </div>
+      )}
 
       {profileOpen && (
         <div className="fixed inset-0 z-40 flex items-start justify-end bg-black/20 px-4 py-4 backdrop-blur-sm" onClick={() => setProfileOpen(false)}>
