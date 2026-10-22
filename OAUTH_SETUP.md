@@ -78,6 +78,8 @@ Crea archivo `.env` en la raíz del proyecto (igual nivel que `package.json`):
 # Google OAuth
 GOOGLE_CLIENT_ID=<el_que_copiaste>
 GOOGLE_CLIENT_SECRET=<el_secret_que_copiaste>
+
+# Backend url (IMPORTANTE: debe coincidir con Authorized redirect URIs en Google)
 GOOGLE_REDIRECT_URI=http://127.0.0.1:8080/api/auth/oauth/google/callback
 
 # Otros (opcional)
@@ -86,6 +88,13 @@ PORT=8080
 HOST=127.0.0.1
 FRONTEND_URL=http://127.0.0.1:5173
 ```
+
+**NOTA:** El `GOOGLE_REDIRECT_URI` debe ser exactamente:
+```
+http://127.0.0.1:8080/api/auth/oauth/google/callback
+```
+
+Este es el valor que Qualnexa enviará a Google. Debe coincidir exactamente con lo que registraste en "Authorized redirect URIs".
 
 ### Paso 5: Reinicia la App
 
@@ -129,12 +138,20 @@ Porque:
 
 ## Solucionar Errores Comunes
 
+### "redirect_uri_mismatch" ✅ ARREGLADO
+**Antes:** Qualnexa enviaba `http://localhost:5173/api/auth/oauth/google/callback` (frontend)
+**Ahora:** Qualnexa envía correctamente `http://127.0.0.1:8080/api/auth/oauth/google/callback` (backend)
+
+**Por qué:** El servidor comunica el redirect_uri correcto al cliente (frontend) mediante `/api/auth/oauth-config`
+
+**Si ves este error:**
+→ Verifica que en Google Cloud Console hayas registrado exactamente:
+```
+Authorized redirect URIs: http://127.0.0.1:8080/api/auth/oauth/google/callback
+```
+
 ### "The OAuth client was not found"
 → `GOOGLE_CLIENT_ID` no está en `.env` o es incorrecto
-
-### "Redirect URI mismatch"
-→ La URL en `.env` `GOOGLE_REDIRECT_URI` no coincide con Google Cloud Console
-→ Verifica que sea exactamente: `http://127.0.0.1:8080/api/auth/oauth/google/callback`
 
 ### "Access blocked: This app's request is invalid"
 → Debes agregar tu email (amatos3@gmail.com) como test user en Google Cloud
