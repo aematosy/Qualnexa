@@ -88,6 +88,7 @@ function App() {
   const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
   const [showVerificationReminder, setShowVerificationReminder] = useState(false);
   const [oauthConfig, setOAuthConfig] = useState<{ google: { enabled: boolean; clientId: string }; github: { enabled: boolean; clientId: string } } | null>(null);
+  const [accountExistsUnverified, setAccountExistsUnverified] = useState<string | null>(null);
 
   useTheme();
 
@@ -220,6 +221,7 @@ function App() {
   async function handleAuth() {
     setAuthError(null);
     setAuthSuccess(null);
+    setAccountExistsUnverified(null);
 
     if (authMode === "SIGN_UP" && passwordInput !== confirmPasswordInput) {
       setAuthError("Passwords do not match.");
@@ -252,6 +254,13 @@ function App() {
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        // Check if account exists but not verified
+        if (response.status === 400 && body.alreadyExists && !body.accountVerified) {
+          setAccountExistsUnverified(emailInput.trim());
+          setAuthError(null);
+          setAuthLoading(false);
+          return;
+        }
         throw new Error(body.message ?? "Authentication failed.");
       }
 
@@ -349,6 +358,34 @@ function App() {
       await loadProjects();
     } catch {
       setAuthError("Unable to sign out.");
+    }
+  }
+
+  async function handleResendVerification() {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailInput.trim() }),
+      });
+
+      const body = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(body.message ?? "Failed to resend verification email.");
+      }
+
+      setAuthSuccess(body.message ?? "Verification email sent. Check your inbox.");
+      setAccountExistsUnverified(null);
+      setShowVerificationReminder(true);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Failed to resend verification email.");
+    } finally {
+      setAuthLoading(false);
     }
   }
 
@@ -739,6 +776,15 @@ function App() {
 
                 {showVerificationReminder && authMode === "SIGN_UP" && (
                   <div className="rounded-[14px] border border-[#ff9500]/20 bg-[#ff9500]/10 px-3 py-2.5 text-[12px] text-[var(--badge-orange-text)]">We sent a verification link to your inbox. Activate your account to finish setup.</div>
+                )}
+                {accountExistsUnverified && (
+                  <div className="space-y-2 rounded-[14px] border border-[#ff9500]/20 bg-[#ff9500]/10 px-3 py-2.5">
+                    <div className="text-[12px] text-[var(--badge-orange-text)]">Account with this email exists but is not verified yet. Resend the verification email?</div>
+                    <button type="button" onClick={handleResendVerification} disabled={authLoading} className="flex w-full items-center justify-center gap-2 rounded-[8px] bg-[#ff9500] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#e68a00] disabled:cursor-not-allowed disabled:opacity-60">
+                      {authLoading ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+                      Resend verification email
+                    </button>
+                  </div>
                 )}
                 {authError && <div className="rounded-[14px] border border-[#ff3b30]/20 bg-[#ff3b30]/8 px-4 py-3 text-[12.5px] text-[var(--badge-red-text)]">{authError}</div>}
                 {authSuccess && <div className="rounded-[14px] border border-[#34c759]/20 bg-[#34c759]/8 px-4 py-3 text-[12.5px] text-[var(--badge-green-text)]">{authSuccess}</div>}

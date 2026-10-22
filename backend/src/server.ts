@@ -377,9 +377,13 @@ app.post(
 
     const existing = [...authUsers.entries()].find(([, user]) => user.email === email);
     
-    // If account exists and is verified, reject
+    // If account exists and is verified, reject with suggestion to login or resend
     if (existing && existing[1].verified) {
-      return reply.code(409).send({ message: "An account with this email already exists." });
+      return reply.code(400).send({ 
+        message: "An account with this email already exists and is verified.", 
+        alreadyExists: true,
+        accountVerified: true 
+      });
     }
 
     let id: string;
@@ -400,7 +404,7 @@ app.post(
 
     const { verificationLink } = queueVerificationEmail(id, email);
     const emailResult = await sendVerificationEmail(email, verificationLink);
-    return { user: { email, name: body.name.trim(), verified: false }, verificationRequired: true, message: emailResult.mode === "resend" ? "Check your inbox to activate your account." : "Check the local dev mailbox to activate your account.", verificationLink: emailResult.verificationLink, deliveryMode: emailResult.mode };
+    return { user: { email, name: body.name.trim(), verified: false }, verificationRequired: true, message: emailResult.mode === "resend" ? "Check your inbox to activate your account." : "Check the local dev mailbox to activate your account.", verificationLink: emailResult.verificationLink, deliveryMode: emailResult.mode, accountReactivated: !!existing };
   },
 );
 
