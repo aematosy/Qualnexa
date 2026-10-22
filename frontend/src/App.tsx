@@ -52,6 +52,10 @@ import {
   EnvironmentDoctorPanel,
 } from "./components/EnvironmentDoctorPanel";
 
+import {
+  ProjectDetailsPage,
+} from "./components/ProjectDetailsPage";
+
 import type {
   AddProjectRequest,
 } from "./types/project";
@@ -70,6 +74,7 @@ function App() {
   const [projects, setProjects] = useState<ProjectManifest[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectError, setProjectError] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [executionPlan, setExecutionPlan] = useState<ExecutionPlan | null>(null);
   const [executionLoading, setExecutionLoading] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -549,6 +554,19 @@ function App() {
     };
   }, [projects]);
 
+  if (selectedProjectId) {
+    const selectedProject = projects.find((p) => p.id === selectedProjectId);
+    if (selectedProject) {
+      return (
+        <ProjectDetailsPage
+          project={selectedProject}
+          onBack={() => setSelectedProjectId(null)}
+          onExecute={(selection) => configureExecution(selectedProjectId, selection)}
+        />
+      );
+    }
+  }
+
   return (
     <>
       <div className="min-h-screen text-[var(--text-primary)]">
@@ -667,6 +685,7 @@ function App() {
                         key={project.id}
                         project={project}
                         onPrepareExecution={configureExecution}
+                        onSelectProject={setSelectedProjectId}
                       />
                     ))}
                   </div>
@@ -838,9 +857,9 @@ function InputField({ label, value, onChange, placeholder, type = "text", icon }
   );
 }
 
-function ProjectRow({ project, onPrepareExecution }: { project: ProjectManifest; onPrepareExecution: (projectId: string, selection: ExecutionSelection) => void }) {
+function ProjectRow({ project, onPrepareExecution, onSelectProject }: { project: ProjectManifest; onPrepareExecution: (projectId: string, selection: ExecutionSelection) => void; onSelectProject: (projectId: string) => void }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-6 py-5 transition hover:bg-[var(--fill-quinary)]">
+    <div className="flex items-center justify-between gap-4 px-6 py-5 transition hover:bg-[var(--fill-quinary)] cursor-pointer" onClick={() => onSelectProject(project.id)}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <div className="text-[14px] font-semibold tracking-tight">{project.name}</div>
@@ -848,7 +867,7 @@ function ProjectRow({ project, onPrepareExecution }: { project: ProjectManifest;
         </div>
         <div className="mt-1 truncate text-[12.5px] text-[var(--text-quaternary)]">{project.source.location}</div>
       </div>
-      <button type="button" onClick={() => onPrepareExecution(project.id, { type: "ALL" })} className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2 text-[12.5px] font-medium text-[var(--text-primary)] transition hover:bg-[var(--fill-quinary)]">Run</button>
+      <button type="button" onClick={(e) => { e.stopPropagation(); onPrepareExecution(project.id, { type: "ALL" }); }} className="rounded-full border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2 text-[12.5px] font-medium text-[var(--text-primary)] transition hover:bg-[var(--fill-quinary)]">Run</button>
     </div>
   );
 }
