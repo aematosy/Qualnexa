@@ -151,6 +151,11 @@ const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX_ATTEMPTS = 5; // max 5 attempts per window
 const BCRYPT_ROUNDS = 10;
 
+// Server configuration (needed early for verification links)
+const port = Number(process.env.PORT ?? 8080);
+const host = process.env.HOST ?? "127.0.0.1";
+const frontendUrl = process.env.FRONTEND_URL ?? "http://127.0.0.1:5173";
+
 const app =
   Fastify({
     logger: true,
@@ -294,7 +299,8 @@ app.get(
 
 function queueVerificationEmail(userId: string, email: string) {
   const token = randomUUID();
-  verificationTokens.set(token, { userId, expiresAt: Date.now() + 1000 * 60 * 60 * 24 });
+  // Token expires in 7 days
+  verificationTokens.set(token, { userId, expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7 });
 
   const verificationLink = `http://${host}:${port}/api/auth/verify-email?token=${token}`;
   const subject = "Activate your Qualnexa account";
@@ -369,14 +375,28 @@ app.post(
       return reply.code(429).send({ message: "Too many registration attempts. Please try again later." });
     }
 
-    const existing = [...authUsers.values()].find((user) => user.email === email);
-    if (existing) {
+    const existing = [...authUsers.entries()].find(([, user]) => user.email === email);
+    
+    // If account exists and is verified, reject
+    if (existing && existing[1].verified) {
       return reply.code(409).send({ message: "An account with this email already exists." });
     }
 
-    const id = randomUUID();
+    let id: string;
     const passwordHash = await hashPassword(body.password);
-    authUsers.set(id, { email, name: body.name.trim(), verified: false, passwordHash, provider: "LOCAL" });
+
+    // If account exists but not verified, update it
+    if (existing) {
+      id = existing[0];
+      const user = existing[1];
+      user.passwordHash = passwordHash;
+      user.name = body.name.trim();
+      // verified stays false
+    } else {
+      // Create new account
+      id = randomUUID();
+      authUsers.set(id, { email, name: body.name.trim(), verified: false, passwordHash, provider: "LOCAL" });
+    }
 
     const { verificationLink } = queueVerificationEmail(id, email);
     const emailResult = await sendVerificationEmail(email, verificationLink);
@@ -552,20 +572,6 @@ await environmentRoutes(
 await executionPreferencesRoutes(
   app,
 );
-
-const port =
-  Number(
-    process.env.PORT ??
-    8080,
-  );
-
-const host =
-  process.env.HOST ??
-  "127.0.0.1";
-
-const frontendUrl =
-  process.env.FRONTEND_URL ??
-  "http://127.0.0.1:5173";
 
 try {
   await app.listen({
