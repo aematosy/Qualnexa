@@ -103,6 +103,25 @@ Nuevo archivo: `backend/src/api/oauth-routes.ts`
 
 ---
 
+### 4. Email Verification Mejorado
+
+**Problemas solucionados:**
+- Token expiraba en 24 horas → Ahora 7 días
+- No había manera de reactivar cuentas no verificadas → Permite re-registro con actualización
+
+**Lógica mejorada:**
+```typescript
+// Si email existe pero NO está verificado
+if (existing && !existing[1].verified) {
+  // Actualiza contraseña y nombre, mantiene unverified
+  // Envía nuevo link de verificación
+} else if (existing && existing[1].verified) {
+  // Rechaza: cuenta ya existe y está verificada
+} else {
+  // Crea nueva cuenta
+}
+```
+
 ## Configuración Requerida
 
 Crear archivo `.env` en la raíz del proyecto:
@@ -137,7 +156,8 @@ Ver `.env.example` para referencia completa.
 - ✅ Email requerido y validado
 - ✅ Contraseña mínimo 10 caracteres
 - ✅ Nombre requerido (1-100 caracteres)
-- ✅ Verificación de email duplicado
+- ✅ Verificación de email duplicado (solo si verificado)
+- ✅ Reactivación automática: Si email existe pero no está verificado, permite reregistrarse
 - ✅ Contraseña hasheada con bcrypt
 - ✅ Rate limiting: máx 5 registros/15 min por email
 
