@@ -287,15 +287,15 @@ function App() {
   }
 
   async function handleOAuth(provider: "google" | "github") {
-    if (!oauthConfig) return;
-
-    if (provider === "google" && oauthConfig.google.enabled) {
+    if (provider === "google") {
+      // Use clientId from config if available, otherwise use default placeholder
+      const clientId = oauthConfig?.google.clientId || "YOUR_GOOGLE_CLIENT_ID";
       const redirectUri = `${window.location.origin}/api/auth/oauth/google/callback`;
       const scope = "openid email profile";
       const responseType = "code";
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
-        client_id: oauthConfig.google.clientId,
+        client_id: clientId,
         redirect_uri: redirectUri,
         scope,
         response_type: responseType,
@@ -303,12 +303,13 @@ function App() {
       }).toString()}`;
 
       window.location.assign(authUrl);
-    } else if (provider === "github" && oauthConfig.github.enabled) {
+    } else if (provider === "github") {
+      const clientId = oauthConfig?.github.clientId || "YOUR_GITHUB_CLIENT_ID";
       const redirectUri = `${window.location.origin}/api/auth/oauth/github/callback`;
       const scope = "user:email";
 
       const authUrl = `https://github.com/login/oauth/authorize?${new URLSearchParams({
-        client_id: oauthConfig.github.clientId,
+        client_id: clientId,
         redirect_uri: redirectUri,
         scope,
         state: Math.random().toString(36),
@@ -752,16 +753,12 @@ function App() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {oauthConfig?.google.enabled && (
-                    <button type="button" onClick={() => handleOAuth("google")} className="flex items-center justify-center gap-2 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-3 py-2 text-[12px] font-medium">
-                      <Sparkles size={14} /> Google
-                    </button>
-                  )}
-                  {oauthConfig?.github.enabled && (
-                    <button type="button" onClick={() => handleOAuth("github")} className="flex items-center justify-center gap-2 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-3 py-2 text-[12px] font-medium">
-                      <Sparkles size={14} /> GitHub
-                    </button>
-                  )}
+                  <button type="button" onClick={() => handleOAuth("google")} className="flex items-center justify-center gap-2 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-3 py-2 text-[12px] font-medium">
+                    <Sparkles size={14} /> Google
+                  </button>
+                  <button type="button" onClick={() => handleOAuth("github")} className="flex items-center justify-center gap-2 rounded-[12px] border border-[var(--hairline-strong)] bg-[var(--fill-quinary)] px-3 py-2 text-[12px] font-medium">
+                    <Sparkles size={14} /> GitHub
+                  </button>
                 </div>
               </div>
             ) : (
