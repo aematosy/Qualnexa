@@ -377,19 +377,17 @@ app.post(
 
     const existing = [...authUsers.entries()].find(([, user]) => user.email === email);
     
-    // If account exists and is verified, reject with suggestion to login or resend
+    // If account exists and is verified, reject
     if (existing && existing[1].verified) {
-      return reply.code(400).send({ 
-        message: "An account with this email already exists and is verified.", 
-        alreadyExists: true,
-        accountVerified: true 
+      return reply.code(409).send({ 
+        message: "An account with this email already exists." 
       });
     }
 
     let id: string;
     const passwordHash = await hashPassword(body.password);
 
-    // If account exists but not verified, update it
+    // If account exists but not verified, update it and resend verification
     if (existing) {
       id = existing[0];
       const user = existing[1];
