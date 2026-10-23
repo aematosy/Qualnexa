@@ -419,7 +419,7 @@ function StatusBadge({
 }: {
   status: ExecutionJob["status"];
 }) {
-  if (status === "PASSED") {
+  if (status === "COMPLETED") {
     return (
       <span className="flex items-center gap-1.5 rounded-full bg-[#34c759]/12 px-3 py-1.5 text-[11px] font-semibold text-[var(--badge-green-text)]">
         <CheckCircle2 size={13} />
@@ -429,15 +429,12 @@ function StatusBadge({
   }
 
   if (
-    status === "FAILED" ||
-    status === "TIMED_OUT"
+    status === "ERROR"
   ) {
     return (
       <span className="flex items-center gap-1.5 rounded-full bg-[#ff3b30]/12 px-3 py-1.5 text-[11px] font-semibold text-[var(--badge-red-text)]">
         <TriangleAlert size={13} />
-        {status === "TIMED_OUT"
-          ? "Timed out"
-          : "Failed"}
+        Failed
       </span>
     );
   }

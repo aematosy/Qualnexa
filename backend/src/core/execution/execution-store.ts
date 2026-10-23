@@ -15,6 +15,9 @@ const jobs =
     ExecutionJob
   >();
 
+const jobOrder:
+  string[] = [];
+
 export function saveExecutionPlan(
   plan: ExecutionPlan,
 ): void {
@@ -33,6 +36,10 @@ export function getExecutionPlan(
 export function saveExecutionJob(
   job: ExecutionJob,
 ): void {
+  if (!jobs.has(job.id)) {
+    jobOrder.unshift(job.id);
+  }
+
   jobs.set(
     job.id,
     job,
@@ -43,4 +50,17 @@ export function getExecutionJob(
   id: string,
 ): ExecutionJob | undefined {
   return jobs.get(id);
+}
+
+export function listExecutionJobs(): ExecutionJob[] {
+  return jobOrder
+    .map(
+      (id) => jobs.get(id),
+    )
+    .filter(
+      (
+        job,
+      ): job is ExecutionJob =>
+        Boolean(job),
+    );
 }

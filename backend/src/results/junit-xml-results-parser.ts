@@ -5,6 +5,7 @@ import {
 } from "node:fs/promises";
 
 import {
+  basename,
   join,
 } from "node:path";
 
@@ -13,7 +14,10 @@ import {
 } from "fast-xml-parser";
 
 import type {
+  ExecutionFailure,
   ExecutionResult,
+  ExecutionStepResult,
+  ExecutionTestResult,
 } from "../core/execution/model.js";
 
 const REPORT_DIRECTORY_NAMES =
@@ -142,10 +146,104 @@ function toNumber(
     : 0;
 }
 
+function toStringValue(
+  value: unknown,
+): string | undefined {
+
+  return typeof value === "string"
+    ? value
+    : undefined;
+}
+
+function normalizeFailureCategory(
+  message: string,
+  stacktrace?: string,
+): ExecutionFailure["category"] {
+
+  const haystack =
+    `${message}\n${stacktrace ?? ""}`
+      .toLowerCase();
+
+  if (
+    haystack.includes("assert") ||
+    haystack.includes("expected")
+  ) {
+    return "ASSERTION";
+  }
+
+  if (haystack.includes("timeout")) {
+    return "TIMEOUT";
+  }
+
+  if (
+    /\bhttp\s*\d{3}\b/.test(haystack) ||
+    haystack.includes("status code")
+  ) {
+    return "HTTP_ERROR";
+  }
+
+  if (
+    haystack.includes("connection refused") ||
+    haystack.includes("network") ||
+    haystack.includes("econn")
+  ) {
+    return "NETWORK";
+  }
+
+  if (
+    haystack.includes("element") &&
+    haystack.includes("not found")
+  ) {
+    return "ELEMENT_NOT_FOUND";
+  }
+
+  if (
+    haystack.includes("environment") ||
+    haystack.includes("missing env")
+  ) {
+    return "ENVIRONMENT";
+  }
+
+  if (
+    haystack.includes("config") ||
+    haystack.includes("configuration")
+  ) {
+    return "CONFIGURATION";
+  }
+
+  if (
+    haystack.includes("test data") ||
+    haystack.includes("fixture")
+  ) {
+    return "TEST_DATA";
+  }
+
+  if (
+    haystack.includes("build") ||
+    haystack.includes("compilation")
+  ) {
+    return "BUILD";
+  }
+
+  if (
+    haystack.includes("exception") ||
+    haystack.includes("error")
+  ) {
+    return "RUNTIME";
+  }
+
+  return "UNKNOWN";
+}
+
 export async function parseJunitXmlResults(
   workspaceRoot: string,
   since?: Date | undefined,
 ): Promise<ExecutionResult | undefined> {
+
+  const nativeKarateSteps =
+    await loadKarateScenarioSteps(
+      workspaceRoot,
+    );
 
   const directories =
     await findReportDirectories(
@@ -169,6 +267,9 @@ export async function parseJunitXmlResults(
   let flaky = 0;
   let durationSeconds = 0;
   let parsedAnyFile = false;
+
+  const tests: ExecutionTestResult[] = [];
+  const failures: ExecutionFailure[] = [];
 
   for (const directory of directories) {
     let files;
@@ -194,10 +295,6 @@ export async function parseJunitXmlResults(
             await stat(filePath);
 
           if (fileStats.mtime < since) {
-            // Stale report left over from a previous execution
-            // (e.g. a build tool that does not clean its report
-            // directory between runs): ignore it so results only
-            // reflect the current execution.
             continue;
           }
         } catch {
@@ -261,6 +358,11 @@ export async function parseJunitXmlResults(
           suite["@_time"],
         );
 
+      const suiteName =
+        toStringValue(
+          suite["@_name"],
+        ) ?? basename(file, ".xml");
+
       const testcases =
         toArray(
           suite.testcase,
@@ -274,6 +376,16 @@ export async function parseJunitXmlResults(
           );
 
       for (const testcase of testcases) {
+        const testId =
+          `${suiteName}:${toStringValue(testcase["@_classname"]) ?? "suite"}:${toStringValue(testcase["@_name"]) ?? `test-${tests.length + 1}`}`;
+
+        const failureNode =
+          asRecord(testcase.failure) ??
+          asRecord(testcase.error);
+
+        const skippedNode =
+          testcase.skipped !== undefined;
+
         const hasFlakyMarker =
           testcase["flakyFailure"] !==
             undefined ||
@@ -282,14 +394,86 @@ export async function parseJunitXmlResults(
           testcase["rerunFailure"] !==
             undefined;
 
-        const terminallyFailed =
-          testcase["failure"] !==
-            undefined ||
-          testcase["error"] !==
-            undefined;
+        const failureMessage =
+          toStringValue(
+            failureNode?.["@_message"],
+          ) ??
+          toStringValue(
+            failureNode?.["#text"],
+          );
 
-        if (hasFlakyMarker && !terminallyFailed) {
+        const stacktrace =
+          toStringValue(
+            failureNode?.["#text"],
+          );
+
+        const status = failureNode
+          ? "FAILED"
+          : skippedNode
+            ? "SKIPPED"
+            : hasFlakyMarker
+              ? "FLAKY"
+              : "PASSED";
+
+        if (hasFlakyMarker && !failureNode) {
           flaky += 1;
+        }
+
+        const testName =
+          toStringValue(
+            testcase["@_name"],
+          ) ?? `Test ${tests.length + 1}`;
+
+        const suiteValue =
+          toStringValue(
+            testcase["@_classname"],
+          ) ?? suiteName;
+
+        const normalizedSteps =
+          nativeKarateSteps.get(
+            `${suiteValue}::${testName}`,
+          );
+
+        tests.push({
+          id: testId,
+          name: testName,
+          suite: suiteValue,
+          status,
+          durationMs: Math.round(
+            toNumber(testcase["@_time"]) * 1000,
+          ),
+          retries: hasFlakyMarker
+            ? 1
+            : 0,
+          failureType: failureMessage,
+          tags:
+            normalizedSteps?.tags ?? [],
+          failureMessage,
+          stacktrace,
+          steps:
+            normalizedSteps?.steps,
+        });
+
+        if (failureNode) {
+          failures.push({
+            testId,
+            testName:
+              toStringValue(
+                testcase["@_name"],
+              ) ?? `Test ${tests.length}`,
+            suite:
+              toStringValue(
+                testcase["@_classname"],
+              ) ?? suiteName,
+            category:
+              normalizeFailureCategory(
+                failureMessage ?? "Unknown failure",
+                stacktrace,
+              ),
+            message:
+              failureMessage ?? "Unknown failure",
+            stacktrace,
+          });
         }
       }
     }
@@ -311,13 +495,101 @@ export async function parseJunitXmlResults(
     failed,
     skipped,
     flaky,
-
     durationMs:
       Math.round(
         durationSeconds * 1000,
       ),
-
     source:
       "junit-xml",
+    tests,
+    failures,
   };
+}
+
+async function loadKarateScenarioSteps(
+  workspaceRoot: string,
+): Promise<Map<string, { tags: string[]; steps: ExecutionStepResult[] }>> {
+
+  const result = new Map<string, { tags: string[]; steps: ExecutionStepResult[] }>();
+  const candidateDirectories = [
+    join(
+      workspaceRoot,
+      "target",
+      "karate-reports",
+      "feature-html",
+    ),
+    join(
+      workspaceRoot,
+      "build",
+      "karate-reports",
+      "feature-html",
+    ),
+  ];
+
+  for (const directory of candidateDirectories) {
+    let files: string[];
+
+    try {
+      files = await readdir(directory);
+    } catch {
+      continue;
+    }
+
+    for (const file of files) {
+      if (!file.endsWith(".html")) {
+        continue;
+      }
+
+      try {
+        const html = await readFile(join(directory, file), "utf8");
+        const marker = '<script id="karate-data" type="application/json">';
+        const start = html.indexOf(marker);
+        const end = html.indexOf("</script>", start);
+
+        if (start < 0 || end < 0) {
+          continue;
+        }
+
+        const parsed = JSON.parse(html.slice(start + marker.length, end).trim()) as {
+          name?: string;
+          scenarios?: Array<{
+            name: string;
+            tags?: string[];
+            steps?: Array<{
+              prefix?: string;
+              keyword?: string;
+              text?: string;
+              status?: string;
+              durationMillis?: number;
+              logSegments?: Array<{ text?: string; lang?: string; code?: string }>;
+            }>;
+          }>;
+        };
+
+        for (const scenario of parsed.scenarios ?? []) {
+          result.set(`${parsed.name ?? "Karate"}::${scenario.name}`, {
+            tags: scenario.tags ?? [],
+            steps: (scenario.steps ?? []).map((step) => ({
+              prefix: step.prefix,
+              keyword: step.keyword,
+              text: step.text,
+              status: step.status?.toUpperCase() === "PASSED"
+                ? "PASSED"
+                : step.status?.toUpperCase() === "FAILED"
+                  ? "FAILED"
+                  : step.status?.toUpperCase() === "SKIPPED"
+                    ? "SKIPPED"
+                    : undefined,
+              durationMs: step.durationMillis,
+              logSegments: step.logSegments,
+            })),
+          });
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  return result;
 }

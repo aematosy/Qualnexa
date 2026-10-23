@@ -121,6 +121,14 @@ import {
 } from "./adapters/execution/gradle/gradle-build-command-adapter.js";
 
 import {
+  NodeExecutionRecipeProvider,
+} from "./adapters/execution/node/node-execution-recipe-provider.js";
+
+import {
+  NodeBuildCommandAdapter,
+} from "./adapters/execution/node/node-build-command-adapter.js";
+
+import {
   KarateSelectionStrategy,
 } from "./adapters/execution/karate/karate-selection-strategy.js";
 
@@ -139,6 +147,10 @@ import {
 import {
   executionPreferencesRoutes,
 } from "./api/execution-preferences-routes.js";
+
+import {
+  settingsRoutes,
+} from "./api/settings-routes.js";
 
 const authUsers = new Map<string, { email: string; name?: string | undefined; verified?: boolean; passwordHash?: string; provider?: "LOCAL" | "GOOGLE" | "GITHUB" }>();
 const authSessions = new Map<string, string>();
@@ -264,11 +276,14 @@ const executionService =
           new KarateSelectionStrategy(),
         ],
       ),
+
+      new NodeExecutionRecipeProvider(),
     ],
 
     [
       new MavenBuildCommandAdapter(),
       new GradleBuildCommandAdapter(),
+      new NodeBuildCommandAdapter(),
     ],
 
     new NodeProcessExecutor(),
@@ -575,6 +590,10 @@ await environmentRoutes(
 );
 
 await executionPreferencesRoutes(
+  app,
+);
+
+await settingsRoutes(
   app,
 );
 

@@ -43,13 +43,31 @@ implements FrameworkSelectionStrategy {
         selectedTests[0]?.path;
 
       if (path) {
+        const testsWithRealScenarios =
+          selectedTests.filter(
+            (test) =>
+              Boolean(test.name?.trim()),
+          );
+
+        const scenarioPaths =
+          testsWithRealScenarios
+            .map((test) =>
+              toKarateClasspathPath(
+                test.path,
+                test.line,
+              ),
+            );
+
         karateOptions =
           buildKarateOptions({
-            paths: [
-              toKarateClasspathPath(
-                path,
-              ),
-            ],
+            paths:
+              scenarioPaths.length > 0
+                ? scenarioPaths
+                : [
+                    toKarateClasspathPath(
+                      path,
+                    ),
+                  ],
           });
       }
     } else if (selection.type === "TESTS") {

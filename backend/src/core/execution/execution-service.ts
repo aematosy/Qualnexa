@@ -45,6 +45,10 @@ import {
   parseJunitXmlResults,
 } from "../../results/junit-xml-results-parser.js";
 
+import {
+  parseNativeReport,
+} from "../../results/native-report-parser.js";
+
 const DEFAULT_TIMEOUT_MS =
   30 * 60 * 1000;
 
@@ -131,6 +135,9 @@ export class ExecutionService {
       environment:
         plan.environment,
 
+      lifecycleStatus:
+        "QUEUED",
+
       status:
         "QUEUED",
 
@@ -171,8 +178,14 @@ export class ExecutionService {
       saveExecutionJob({
         ...job,
 
+        lifecycleStatus:
+          "ERROR",
+
+        testResultStatus:
+          "NO_RESULTS",
+
         status:
-          "FAILED",
+          "ERROR",
 
         finishedAt:
           new Date().toISOString(),
@@ -188,6 +201,9 @@ export class ExecutionService {
 
     const running: ExecutionJob = {
       ...job,
+
+      lifecycleStatus:
+        "RUNNING",
 
       status:
         "RUNNING",
@@ -276,6 +292,18 @@ export class ExecutionService {
               () => undefined,
             );
 
+      const nativeReport =
+        wasCancelled
+          ? undefined
+          : await parseNativeReport(
+              project.source.location,
+              project.frameworks.map(
+                (framework) => framework.id,
+              ),
+            ).catch(
+              () => undefined,
+            );
+
       const artifacts =
         await harvestArtifacts(
           project.source.location,
@@ -293,21 +321,42 @@ export class ExecutionService {
           () => [],
         );
 
-      const status =
+      const lifecycleStatus =
         wasCancelled
           ? "CANCELLED"
+          : result.exitCode === 0 || result.timedOut
+            ? "COMPLETED"
+            : "ERROR";
+
+      const testResultStatus =
+        wasCancelled
+          ? "NO_RESULTS"
           : result.timedOut
-            ? "TIMED_OUT"
+            ? "FAILED"
             : executionResult
-              ? executionResult.failed > 0
-                ? "FAILED"
-                : "PASSED"
+              ? executionResult.total === 0
+                ? "NO_RESULTS"
+                : executionResult.failed > 0
+                  ? "FAILED"
+                  : "PASSED"
               : result.exitCode === 0
-                ? "PASSED"
+                ? "NO_RESULTS"
                 : "FAILED";
+
+      const status = lifecycleStatus === "COMPLETED"
+        ? testResultStatus === "FAILED"
+          ? "ERROR"
+          : testResultStatus === "NO_RESULTS"
+            ? "COMPLETED"
+            : "COMPLETED"
+        : lifecycleStatus;
 
       saveExecutionJob({
         ...running,
+
+        lifecycleStatus,
+
+        testResultStatus,
 
         status,
 
@@ -329,6 +378,19 @@ export class ExecutionService {
 
         artifacts,
 
+        nativeReport:
+          nativeReport
+            ? {
+                framework:
+                  nativeReport.framework,
+                reportPath:
+                  nativeReport.reportPath,
+                featurePath:
+                  nativeReport.relativePath ??
+                  nativeReport.path,
+              }
+            : undefined,
+
         error:
           wasCancelled
             ? "Execution was stopped by the user."
@@ -349,8 +411,14 @@ export class ExecutionService {
       saveExecutionJob({
         ...running,
 
+        lifecycleStatus:
+          "ERROR",
+
+        testResultStatus:
+          "NO_RESULTS",
+
         status:
-          "FAILED",
+          "ERROR",
 
         finishedAt:
           new Date().toISOString(),

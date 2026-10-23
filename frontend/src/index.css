@@ -42,6 +42,16 @@
 
   --glass-panel: rgba(255, 255, 255, 0.78);
   --glass-sidebar: rgba(248, 248, 250, 0.72);
+  --sidebar-active-border: rgba(10, 132, 255, 0.22);
+  --accent-soft-surface: rgba(10, 132, 255, 0.1);
+  --accent-soft-border: rgba(10, 132, 255, 0.18);
+  --accent-strong: #0a84ff;
+  --accent-strong-hover: #0074e8;
+  --info-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 248, 255, 0.82));
+  --info-panel-border: rgba(10, 132, 255, 0.14);
+  --info-panel-text: #12314d;
+  --info-panel-muted: rgba(18, 49, 77, 0.72);
+  --overlay-backdrop: rgba(15, 23, 42, 0.16);
 
   --bg-glow-1: rgba(10, 132, 255, 0.07);
   --bg-glow-2: rgba(175, 82, 222, 0.06);
@@ -50,6 +60,12 @@
   --badge-green-text: #1f9c43;
   --badge-red-text: #d70015;
   --badge-blue-text: #0066cc;
+  --success-soft-surface: rgba(52, 199, 89, 0.12);
+  --success-soft-border: rgba(52, 199, 89, 0.2);
+  --danger-soft-surface: rgba(255, 59, 48, 0.1);
+  --danger-soft-border: rgba(255, 59, 48, 0.18);
+  --warning-soft-surface: rgba(255, 149, 0, 0.12);
+  --warning-soft-border: rgba(255, 149, 0, 0.18);
 
   color-scheme: light;
 }
@@ -79,6 +95,16 @@
 
   --glass-panel: rgba(28, 28, 30, 0.78);
   --glass-sidebar: rgba(20, 20, 22, 0.72);
+  --sidebar-active-border: rgba(90, 200, 250, 0.28);
+  --accent-soft-surface: rgba(90, 200, 250, 0.12);
+  --accent-soft-border: rgba(90, 200, 250, 0.24);
+  --accent-strong: #5ac8fa;
+  --accent-strong-hover: #38bdf8;
+  --info-panel-bg: linear-gradient(180deg, rgba(24, 28, 38, 0.86), rgba(17, 22, 31, 0.9));
+  --info-panel-border: rgba(90, 200, 250, 0.14);
+  --info-panel-text: #f5f9ff;
+  --info-panel-muted: rgba(222, 234, 247, 0.72);
+  --overlay-backdrop: rgba(0, 0, 0, 0.32);
 
   --bg-glow-1: rgba(10, 132, 255, 0.12);
   --bg-glow-2: rgba(175, 82, 222, 0.1);
@@ -87,6 +113,12 @@
   --badge-green-text: #32d74b;
   --badge-red-text: #ff6961;
   --badge-blue-text: #5ac8fa;
+  --success-soft-surface: rgba(50, 215, 75, 0.14);
+  --success-soft-border: rgba(50, 215, 75, 0.24);
+  --danger-soft-surface: rgba(255, 105, 97, 0.12);
+  --danger-soft-border: rgba(255, 105, 97, 0.24);
+  --warning-soft-surface: rgba(255, 179, 64, 0.14);
+  --warning-soft-border: rgba(255, 179, 64, 0.24);
 
   color-scheme: dark;
 }
@@ -118,6 +150,10 @@ body {
     color 0.25s ease;
 }
 
+#root {
+  min-height: 100vh;
+}
+
 button,
 input,
 select,
@@ -127,6 +163,12 @@ textarea {
 
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-soft-border);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {
@@ -163,11 +205,6 @@ button {
   -webkit-backdrop-filter: blur(32px) saturate(180%);
 }
 
-.glass-dark {
-  background: rgba(28, 28, 30, 0.82);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-}
 
 .sheet-grabber {
   width: 36px;

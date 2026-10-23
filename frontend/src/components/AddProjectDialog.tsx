@@ -269,7 +269,7 @@ export function AddProjectDialog({
               type="button"
               disabled={!canSubmit}
               onClick={handleSubmit}
-              className="rounded-full bg-[#0a84ff] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(10,132,255,0.4)] transition hover:bg-[#0074e8] active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-[var(--fill-secondary)] disabled:text-[var(--text-quinary)] disabled:shadow-none"
+              className="rounded-full bg-[var(--accent-strong)] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(10,132,255,0.28)] transition hover:bg-[var(--accent-strong-hover)] active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-[var(--fill-secondary)] disabled:text-[var(--text-quinary)] disabled:shadow-none"
             >
               Analyze project
             </button>
@@ -314,12 +314,12 @@ function SourceButton({
       className={[
         "relative rounded-[16px] border p-4 text-left transition",
         active
-          ? "border-[#0a84ff] bg-[#0a84ff]/[0.06] ring-1 ring-[#0a84ff]/40"
+          ? "border-[var(--accent-soft-border)] bg-[var(--accent-soft-surface)] ring-1 ring-[var(--accent-soft-border)]"
           : "border-[var(--hairline-strong)] bg-[var(--surface)] hover:border-[var(--hairline-heavy)]",
       ].join(" ")}
     >
       {active && (
-        <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[#0a84ff] text-white">
+        <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-strong)] text-white">
           <Check size={13} />
         </div>
       )}

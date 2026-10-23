@@ -61,7 +61,7 @@ export function TestTreePanel({ project, onSelectTest }: Props) {
         <button
           type="button"
           onClick={() => onSelectTest({ type: "ALL" })}
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#0a84ff] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#0074e8]"
+          className="inline-flex items-center gap-2 rounded-2xl bg-[var(--accent-strong)] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--accent-strong-hover)]"
         >
           <Sparkles size={14} />
           Run full tree
@@ -89,7 +89,7 @@ export function TestTreePanel({ project, onSelectTest }: Props) {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#0a84ff]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0a84ff]">
+                    <span className="rounded-full border border-[var(--accent-soft-border)] bg-[var(--accent-soft-surface)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-strong)]">
                       Feature {index + 1}
                     </span>
                     <span className="rounded-full bg-[var(--fill-quinary)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-quaternary)]">
@@ -107,7 +107,7 @@ export function TestTreePanel({ project, onSelectTest }: Props) {
                 <button
                   type="button"
                   onClick={() => onSelectTest({ type: "CONTAINER", containerId: container.id })}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-4 py-2 text-[12px] font-semibold text-[#0a84ff] transition hover:bg-[#0a84ff] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--accent-soft-border)] bg-[var(--accent-soft-surface)] px-4 py-2 text-[12px] font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-strong)] hover:text-white"
                   title="Run all scenarios in this feature"
                 >
                   <Play size={14} />
@@ -146,7 +146,7 @@ export function TestTreePanel({ project, onSelectTest }: Props) {
                         <button
                           type="button"
                           onClick={() => onSelectTest({ type: "TESTS", testIds: [test.id] })}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2 text-[12px] font-semibold text-[var(--text-primary)] transition hover:border-[#0a84ff]/35 hover:bg-[#0a84ff] hover:text-white"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-4 py-2 text-[12px] font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-soft-border)] hover:bg-[var(--accent-strong)] hover:text-white"
                           title="Run this scenario"
                         >
                           <Play size={14} />

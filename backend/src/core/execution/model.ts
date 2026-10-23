@@ -89,10 +89,15 @@ export interface ExecutionPlan {
 export type ExecutionJobStatus =
   | "QUEUED"
   | "RUNNING"
+  | "COMPLETED"
+  | "ERROR"
+  | "CANCELLED";
+
+export type ExecutionTestResultStatus =
   | "PASSED"
   | "FAILED"
-  | "TIMED_OUT"
-  | "CANCELLED";
+  | "PARTIAL"
+  | "NO_RESULTS";
 
 export interface BuildInvocation {
   tasks: string[];
@@ -155,6 +160,59 @@ export interface ProcessResult {
   timedOut: boolean;
 }
 
+export interface ExecutionStepLogSegment {
+  text?: string | undefined;
+  lang?: string | undefined;
+  code?: string | undefined;
+}
+
+export interface ExecutionStepResult {
+  prefix?: string | undefined;
+  keyword?: string | undefined;
+  text?: string | undefined;
+  status?: "PASSED" | "FAILED" | "SKIPPED" | "FLAKY" | undefined;
+  durationMs?: number | undefined;
+  logSegments?: ExecutionStepLogSegment[] | undefined;
+}
+
+export interface ExecutionTestResult {
+  id: string;
+  name: string;
+  suite: string;
+  status:
+    | "PASSED"
+    | "FAILED"
+    | "SKIPPED"
+    | "FLAKY";
+  durationMs?: number | undefined;
+  retries?: number | undefined;
+  failureType?: string | undefined;
+  tags: string[];
+  failureMessage?: string | undefined;
+  stacktrace?: string | undefined;
+  steps?: ExecutionStepResult[] | undefined;
+}
+
+export interface ExecutionFailure {
+  testId: string;
+  testName: string;
+  suite: string;
+  category:
+    | "ASSERTION"
+    | "TIMEOUT"
+    | "HTTP_ERROR"
+    | "NETWORK"
+    | "ELEMENT_NOT_FOUND"
+    | "ENVIRONMENT"
+    | "CONFIGURATION"
+    | "TEST_DATA"
+    | "RUNTIME"
+    | "BUILD"
+    | "UNKNOWN";
+  message: string;
+  stacktrace?: string | undefined;
+}
+
 export interface ExecutionResult {
   total: number;
   passed: number;
@@ -165,12 +223,20 @@ export interface ExecutionResult {
   durationMs?: number | undefined;
 
   source: string;
+  tests: ExecutionTestResult[];
+  failures: ExecutionFailure[];
 }
 
 export interface ExecutionArtifact {
   name: string;
   relativePath: string;
   sizeBytes: number;
+}
+
+export interface NativeReportReference {
+  framework: string;
+  reportPath: string;
+  featurePath?: string | undefined;
 }
 
 export interface CustomCommandConfig {
@@ -206,6 +272,10 @@ export interface ExecutionJob {
 
   environment?: string | undefined;
 
+  lifecycleStatus: ExecutionJobStatus;
+
+  testResultStatus?: ExecutionTestResultStatus | undefined;
+
   status: ExecutionJobStatus;
 
   startedAt?: string | undefined;
@@ -227,4 +297,6 @@ export interface ExecutionJob {
   result?: ExecutionResult | undefined;
 
   artifacts: ExecutionArtifact[];
+
+  nativeReport?: NativeReportReference | undefined;
 }

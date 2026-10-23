@@ -37,6 +37,7 @@ import {
 import {
   getExecutionJob,
   getExecutionPlan,
+  listExecutionJobs,
   saveExecutionPlan,
 } from "../core/execution/execution-store.js";
 
@@ -321,6 +322,58 @@ export async function executionRoutes(
       return reply
         .code(202)
         .send(job);
+    },
+  );
+
+  app.get(
+    "/api/executions/jobs",
+    async () => {
+      return listExecutionJobs();
+    },
+  );
+
+  app.get(
+    "/api/executions/jobs/:id/plan",
+    async (
+      request,
+      reply,
+    ) => {
+
+      const { id } =
+        request.params as {
+          id: string;
+        };
+
+      const job =
+        getExecutionJob(id);
+
+      if (!job) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution job not found.",
+          });
+      }
+
+      const plan =
+        getExecutionPlan(
+          job.planId,
+        );
+
+      if (!plan) {
+        return reply
+          .code(404)
+          .send({
+            message:
+              "Execution plan not found for this job.",
+          });
+      }
+
+      return {
+        jobId: job.id,
+        plan,
+      };
     },
   );
 

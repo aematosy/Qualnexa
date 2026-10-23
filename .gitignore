@@ -35,3 +35,6 @@ frontend/dist/
 
 # Local AI/editor metadata
 backend/.axet-code/
+
+# Local AI/editor metadata
+frontend/.axet-code/
